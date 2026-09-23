@@ -1,33 +1,35 @@
 # Kidney organoid analyses
 
-Score how close lab-grown kidney tissue is to a **working kidney** (filter, reabsorbing tubule, low scar) and whether injured tissue can come back.
+Score how close lab-grown kidney tissue is to a **working kidney** and whether injured tissue can come back.
 
-Owner: [hokocodes](https://github.com/hokocodes)
+## Real data (what you actually need)
 
-## Analyses
+The demo scripts invent cells. Real scoring uses `analyze_real.py` on count matrices you download. Full URL table: [DATA_SOURCES.md](DATA_SOURCES.md).
 
-1. **Maturity and missing cell types** (`analysis1_maturity_missing_cells.py`)
-   - Module scores: progenitor, podocyte, mature PT, loop of Henle, distal, collecting duct, glomerular endothelium, off-target, fibrosis
-   - Outputs a missing-cell report vs a working-nephron census and a maturity score (adult programs minus progenitors)
-   - Public targets: GEO GSE213152, GSE269904 + [Zenodo 18732338](https://zenodo.org/records/18732338), [KPMP](https://atlas.kpmp.org/)
-
-2. **Fibrosis vs repair** (`analysis2_fibrosis_vs_repair.py`)
-   - Recovery Index = (healthy PT + podocyte) − (failed-repair + fibrosis)
-   - Simulated 11 mM vs 33 mM glucose vs inhibitor arm (GSE342984-style biology)
-   - Public targets: GEO GSE342984, Combes ischaemic organoid AKI, KPMP failed-repair labels
-
-Default mode uses simulated atlas-like cells so the repo runs without multi-GB downloads. Swap the `simulate_*` functions for a real gene-by-cell matrix (columns = HGNC symbols).
-
-## Run
+Start here — four filtered 10x H5 files from **GSE342984** (~115 MB total):
 
 ```bash
-python3 -m pip install numpy pandas matplotlib
+pip install numpy pandas matplotlib h5py scipy
+bash download_public_data.sh
+python3 analyze_real.py --mode both \
+  --matrix data/GSM9944363_Sample1_filtered_feature_bc_matrix.h5 --label glucose_11mM \
+  --matrix data/GSM9944364_Sample2_filtered_feature_bc_matrix.h5 --label glucose_11mM \
+  --matrix data/GSM9944365_Sample3_filtered_feature_bc_matrix.h5 --label glucose_33mM \
+  --matrix data/GSM9944366_Sample4_filtered_feature_bc_matrix.h5 --label glucose_33mM
+```
+
+| Sample | Condition |
+|---|---|
+| GSM9944363 Sample1 | 11 mM control |
+| GSM9944364 Sample2 | 11 mM control |
+| GSM9944365 Sample3 | 33 mM high glucose |
+| GSM9944366 Sample4 | 33 mM high glucose |
+
+Larger maturity atlas: [Zenodo 18732338](https://zenodo.org/records/18732338) Stage4 `h5ad` (1.3 GB) or GEO [GSE269904](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE269904). Adult / spatial reference: [KPMP](https://atlas.kpmp.org/).
+
+## Demo scripts (no download)
+
+```bash
 python3 analysis1_maturity_missing_cells.py
 python3 analysis2_fibrosis_vs_repair.py
 ```
-
-Writes CSVs and PNGs to `analysis_outputs/`.
-
-## Honest limit
-
-Marker scores are not filtration or concentrating ability. They tell you which lineages to add next (assembloid, transplant, better patterning) so tissue can work again.
